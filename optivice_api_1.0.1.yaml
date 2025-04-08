@@ -1,0 +1,581 @@
+openapi: 3.0.1
+info:
+  title: Scheiber Solutions API
+  description: API for obtaining an OAuth2 bearer token using client credentials. Sending Energy and Master Data. Retrieving Forecast Data
+  contact:
+    email: mathias.fuchs@scheiber.solutions
+    x-additional_email:
+      - office@scheiber.solutions
+  version: 1.0.1
+  x-changelog:
+    - version: "1.0.1"
+      changes:
+        - "Added KPI Endpoint"
+    - version: "1.0.0"
+      changes:
+        - "Made the API"
+
+servers:
+  - url: https://login.optivice.energy/realms/app.optivice.energy/protocol
+    description: Authentication Server
+  - url: https://app.optivice.energy/api/1.0.0/
+    description: Main API
+    
+tags:
+  - name: Authentification
+    description: Endpoint for OAuth Token
+  - name: Master Data
+    description: Endpoint for Pushing Master Data -> User Data
+  - name: Energy Data
+    description: Endpoint for Pushing Energy Data -> timeseries
+  - name: Forecast
+    description: Endpoint for Requesting Forecast Data
+  - name: KPI
+    description: KPI Endpoint for Energy in Community
+    
+components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://login.optivice.energy/realms/app.optivice.energy/protocol/openid-connect/token
+          scopes:
+            master_data: Sends Metadata about the User
+            energy_data: Sends Timeseries data
+            forecast_auth: Retrieves Forecast Timeseries data
+            kpi_auth: Retrieves KPI´s
+            
+  schemas:
+    EnergyData:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/energy_data'
+    
+    energy_data:
+      type: object
+      properties:
+        energyRecord:
+          $ref: '#/components/schemas/energyRecord'
+    
+    energyRecord:
+      type: object
+      properties:
+        ecid:
+          type: string
+          description: Technical identification for community
+          example: "AT000000RC1234560000000000000000"
+        energyData:
+          type: array
+          description: Energy data readings
+          items:
+            $ref: '#/components/schemas/energyData'
+        meteringIntervall:
+          type: string
+          description: Measurement interval (QH = Quarter Hour)
+          example: "QH"
+        meteringPeriodStart:
+          type: string
+          format: date-time
+          description: Start of metering period (usually 00:00)
+          example: "2025-01-28T00:00:00+01:00"
+        meteringPeriodEnd:
+          type: string
+          format: date-time
+          description: End of metering period (usually 00:00)
+          example: "2025-01-29T00:00:00+01:00"
+        processDate:
+          type: string
+          format: date-time
+          description: Datetime when the energy record was generated
+          example: "2025-01-29T01:00:00+01:00"
+        meteringPoint:
+          type: string
+          description: Metering point for identification
+          example: "AT0010000000000000000000000000000"
+
+
+    energyData:
+      type: object
+      properties:
+        EP:
+          type: array
+          description: Energy Production/Consumption Records, based on Meter Codes
+          items:
+            $ref: '#/components/schemas/EP'
+        UOM:
+          type: string
+          description: Unit of measurement (e.g., kWh)
+          example: "kWh"
+        MeterCode:
+          type: string
+          description: Meter code (e.g., https://www.ebutilities.at/documents/20200304112759_MeterCodes_ConsumptionRecord.pdf)
+          example: "1-1:2.9.0 G.01"
+
+    EP:
+      type: object
+      description: List of energy data points
+      properties:
+        BQ:
+          type: string
+          description: Billing Quantity. Measurement Value for billing in a community
+          example: "132"
+        MM:
+          type: string
+          description: Measurement Quality (L1 = best, L2 = ok, L3 = worst)
+          example: "L1"
+        DTF:
+          type: string
+          format: date-time
+          description: Start time of measurement
+          example: "2025-01-28T00:00:00+01:00"
+        DTT:
+          type: string
+          format: date-time
+          description: End time of measurement
+          example: "2025-01-28T00:15:00+01:00"
+      example:
+        - BQ: 0
+          MM: "L3"
+          DTF: "2025-01-28T00:00:00+01:00"
+          DTT: "2025-01-28T00:15:00+01:00"
+        - BQ: 250
+          MM: "L1"
+          DTF: "2025-01-28T00:15:00+01:00"
+          DTT: "2025-01-28T00:30:00+01:00"
+        - BQ: 120
+          MM: "L2"
+          DTF: "2025-01-28T00:30:00+01:00"
+          DTT: "2025-01-28T00:45:00+01:00"
+    
+          
+    
+    MasterData:
+      type: object
+      properties:
+        community:
+          $ref: '#/components/schemas/community'
+    
+    community:
+      type: object
+      properties:
+        ecid:
+          type: string
+          description: Technical identification for community
+          example: "AT000000RC1234560000000000000000"
+        communityName:
+          type: string
+          description: Name of the Community
+          example: "EEG am Wald"
+        communityType:
+          type: string
+          description: Type of the Communtiy -> EEG, BEG, GEA
+          example: "EEG"
+        users:
+          type: array
+          items: 
+            $ref: "#/components/schemas/users"
+      
+    users:
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: "Max"
+        lastName:
+          type: string
+          example: "Mustermann"
+        email:
+          type: string
+          example: "max.mustermann@email.com"
+        objects:
+          type: array
+          description: A Single Object -> House. Array of Objects -> House1, House2.. 
+          items: 
+            $ref: '#/components/schemas/objects'
+      
+    objects:
+      type: object
+      properties:
+        objectName:
+          type: string
+          description: Name of the Object/House for Identification
+          example: "House 1"
+        zip:
+          type: string
+          description: Postal Code
+          example: "1010"
+        city:
+          type: string
+          description: Name of the City
+          example: "Wien"
+        address:
+          type: string
+          description: Street Name and Number
+          example: "Heldenplatz 1"
+        meteringPoints:
+          type: array
+          description: A Single Metering Point or an Array of Metering Points
+          items: 
+            $ref: '#/components/schemas/meteringPoints'
+          
+    meteringPoints:
+      type: object
+      properties:
+        meteringPoint:
+          type: string
+          description: Metering Point Number Begining with AT00... has 33 characters
+          example: "AT0010000000000000000000000000000"
+        meteringPointName:
+          type: string
+          description: Name of the Metering Point for clearer identification
+          example: "Wohnung"
+        energyDirection:
+          type: string
+          description: Energy Direction -> GENERATION or CONSUMPTION
+          example: "GENERATION"
+        plantCategory:
+          type: string
+          description: Name of Energy Production. PV, Water, Wind
+          example: "PV"
+        activations:
+          type: array
+          description: How much activations and/or deactivations where in this community. 1 or more
+          items:
+            $ref: '#/components/schemas/activations'
+        
+          
+    activations:
+      type: object
+      properties:
+        dateFrom:
+          type: string
+          description: First Day of the activation in the community. Only Date
+          example: "2022-01-01"
+        dateTo:
+          type: string
+          description: End of activation in this community. Or open End.
+          example: "9999-12-31"
+        partFactor:
+          type: string
+          description: Participation Factor in this community. 0-100%
+          example: "80"
+          
+    Forecast:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/forecastData'
+            
+    forecastData:
+      type: object
+      properties:
+        processingDate:
+          type: string
+          description: Date the Request was Generated
+          example: "2025-02-25 15:50:12.485673"
+        meteringPoint:
+          type: string
+          description: Metering Point for whom the forecast was generated.
+          example: "AT0010000000000000000000000000000"
+        energyDirection:
+          type: string
+          description: Energy Direction #todo better name -> which result is needed from the 3 tables? 
+          example: "GENERATION"
+        measurementUnit:
+          type: string
+          description: Unit in which the forecast is generated
+          example: "Wh"
+        forecastInterval:
+          type: string
+          description: Which Intervall should be generated. QH, Daily...
+          example: "QH"
+        forecast:
+          type: array
+          description: Main forecast data
+          items:
+            $ref: '#/components/schemas/forecastItem'
+            
+    forecastItem:
+      type: object
+      properties:
+        forecastDate:
+          type: string
+          description: Datetime that the forecast generates in UTC. One week in the future.
+          example: "2025-03-04 12:30:00+00:00"
+        forecastValue:
+          type: string
+          description: Value of the forecast
+          example: "17872.35"
+        dateModified:
+          type: string
+          description: Datetime when the forecast was generated.
+          example: "2025-02-25 14:08:15+00:00"
+          
+    
+    kpi:
+      type: object
+      properties:
+        ecid:
+          type: string
+          description: ECID
+          example: "AT00100000000RC123456000000000000"
+        dateFrom:
+          type: string
+          example: "2025-01-01"
+        dateTo:
+          type: string
+          example: "2025-01-07"
+        unit:
+          type: string
+          example: "kWH"
+        netzeinspeisung:
+          type: string
+          example: "23,2"
+          description: ""
+        netzbezug:
+          type: string
+          example: "2,2"
+          description: ""
+        einspeisungEG:
+          type: string
+          example: "12"
+          description: ""
+        bezugEG:
+          type: string
+          example: "4,2"
+          description: ""
+        ueberschuss:
+          type: string
+          example: "8"
+          description: ""
+        bedarf:
+          type: string
+          example: "0"
+          description: ""
+        erzeugung:
+          type: string
+          example: "33"
+          description: ""
+        verbrauch:
+          type: string
+          example: "12"
+          description: ""
+        eigenverbrauch:
+          type: string
+          example: "11"
+          description: ""
+        
+        
+          
+        
+      
+
+
+paths:
+  /openid-connect/token:
+    post:
+      tags:
+        - Authentification
+      summary: Get OAuth Bearer Token
+      description: Obtain an access token using the client credentials flow.
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                grant_type:
+                  type: string
+                  example: "client_credentials"
+                client_id:
+                  type: string
+                  example: "your-client-id"
+                client_secret:
+                  type: string
+                  example: "your-client-secret"
+                scope:
+                  type: string
+                  example: "master_data"
+            examples:
+              master_data:
+                summary: This is for master_data -> User data, objects, meteringpoints, etc... 
+                value:
+                  grant_type: "client_credentials"
+                  client_id: "your-client-id"
+                  client_secret: "your-client-secret"
+                  scope: "master_data"
+              energy_data:
+                summary: This is for energy_data -> timeseries
+                value:
+                  grant_type: "client_credentials"
+                  client_id: "your-client-id"
+                  client_secret: "your-client-secret"
+                  scope: "energy_data"
+      parameters:
+        - in: header
+          name: Content-Type
+          schema:
+            type: string
+            example: "application/x-www-form-urlencoded"
+          required: true
+      responses:
+        "200":
+          description: Successful token response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1..."
+                  token_type:
+                    type: string
+                    example: "Bearer"
+                  expires_in:
+                    type: integer
+                    example: 300
+        "400":
+          description: Invalid request (e.g., missing credentials)
+        "401":
+          description: Unauthorized (invalid credentials)
+          
+  /masterData/update:
+    post:
+      tags:
+        - Master Data
+      summary: Insert Master Data
+      requestBody:
+        description: ""
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MasterData"
+        required: true
+      security:
+        - OAuth2:
+          - master_data
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Invalid Request Format
+          
+  /energy/data:
+    post:
+      tags:
+        - Energy Data
+      summary: Insert Energy Data -> timeseries
+      requestBody:
+        description: ""
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnergyData'
+      security:
+        - OAuth2:
+          - energy_data
+      responses:
+        "200":
+          description: Success
+  /forecast:
+    get:
+      tags:
+        - Forecast
+      summary: Retrieve forecast data
+      description: Returns forecast data based on query parameters.
+      parameters:
+        - name: meteringPoint
+          in: query
+          required: true
+          description: "Metering point ID to filter the forecast data."
+          schema:
+            type: string
+        - name: dateFrom
+          in: query
+          required: true
+          description: "Start date of the forecast range (YYYY-MM-DD)."
+          schema:
+            type: string
+            format: date
+            example: "2025-02-25"
+        - name: dateTo
+          in: query
+          required: true
+          description: "End date of the forecast range (YYYY-MM-DD)."
+          schema:
+            type: string
+            format: date
+            example: "2025-03-04"
+      security:
+        - OAuth2:
+          - forecast_auth
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Forecast'
+        "400":
+          description: Bad Request (Invalid parameters)
+        "500":
+          description: Internal Server Error
+          
+  /kpi:
+    get:
+      tags:
+        - KPI
+      summary: Retrieve Kpi Data
+      description: Returns a variety of KPIs based on query parameters.
+      parameters:
+        - name: ecid
+          in: query
+          required: true
+          description: "ECID to filter the Community and KPI data"
+          schema:
+            type: string
+        - name: dateFrom
+          in: query
+          required: true
+          description: "Start date of the KPI range (YYYY-MM-DD)"
+          schema:
+            type: string
+            format: date
+            example: "2025-01-01"
+        - name: dateTo
+          in: query
+          required: true
+          description: "End date of the KPI range (YYYY-MM-DD)"
+          schema:
+            type: string
+            format: date
+            example: "2025-01-07"
+      security:
+        - OAuth2:
+            - kpi_auth
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/kpi"
+        "400":
+          description: Bad Request (Invalid Parameters)
+
+        
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+
