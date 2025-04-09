@@ -3,7 +3,10 @@ window.onload = function () {
 
   // the following lines will be replaced by docker/configurator, when it runs in a docker-container
   window.ui = SwaggerUIBundle({
-    url: "optivice_api_1.0.1.yaml",
+    urls: [
+      { url: "optivice_api_1.0.0.yaml", name: "API 1.0.0" },
+      { url: "optivice_api_1.0.1.yaml", name: "API 1.0.1" },
+    ],
     dom_id: "#swagger-ui",
     deepLinking: true,
     presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
