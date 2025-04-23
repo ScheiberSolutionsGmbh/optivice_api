@@ -6,6 +6,7 @@ window.onload = function () {
     urls: [
       { url: "optivice_api_1.0.0.yaml", name: "API 1.0.0" },
       { url: "optivice_api_1.0.1.yaml", name: "API 1.0.1" },
+      { url: "billing.yaml", name: "Billing Test API" },
     ],
     dom_id: "#swagger-ui",
     deepLinking: true,

@@ -1,0 +1,214 @@
+openapi: 3.0.3
+info:
+  title: Abrechnung Dienstleister API
+  version: 1.0.0
+  description: API for retrieving smart meter data for energy communities.
+
+paths:
+  /smart-meter-generation:
+    get:
+      summary: Get smart meter data Generation for energy community billing
+      description: Returns structured smart meter data with energy metrics.
+      responses:
+        "200":
+          description: Smart meter data successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      processingDate:
+                        type: string
+                        format: date-time
+                        example: "2025-04-22T00:00:00Z"
+                      ecid:
+                        type: string
+                        example: "AT00900000000RC123456000000000469"
+                      meteringPoint:
+                        type: string
+                        example: "AT123456789012345678"
+                      energyDirection:
+                        type: string
+                        example: "GENERATION"
+                      measurementUnit:
+                        type: string
+                        example: "Wh"
+                      measurementIntervall:
+                        type: string
+                        example: "QH"
+                      measurement:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            Gesamterzeugung:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  MessZeitPunktStart:
+                                    type: string
+                                    format: date-time
+                                    example: "2025-04-22T00:00:00Z"
+                                  MessZeitPunktEnde:
+                                    type: string
+                                    format: date-time
+                                    example: "2025-04-22T00:15:00Z"
+                                  Gesamtverbrauch:
+                                    type: number
+                                    example: 123.45
+                            UeberschussInNetz:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  MessZeitPunktStart:
+                                    type: string
+                                    format: date-time
+                                    example: "2025-04-22T00:15:00Z"
+                                  MessZeitPunktEnde:
+                                    type: string
+                                    format: date-time
+                                    example: "2025-04-22T00:30:00Z"
+                                  UeberschussInNetz:
+                                    type: number
+                                    example: 67.89
+                            ErzeugungLautTeilnahmefaktor:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  MessZeitPunktStart:
+                                    type: string
+                                    format: date-time
+                                    example: "2025-04-22T00:30:00Z"
+                                  MessZeitPunktEnde:
+                                    type: string
+                                    format: date-time
+                                    example: "2025-04-22T00:45:00Z"
+                                  ErzeugungLautTeilnahmefaktor:
+                                    type: number
+                                    example: 45.67
+
+  /smart-meter-consumption:
+    get:
+      summary: Get smart meter consumption data
+      description: Returns smart meter data related to energy consumption within an energy community.
+      responses:
+        "200":
+          description: Smart meter consumption data successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      processingDate:
+                        type: string
+                        format: date-time
+                        example: "2025-04-22T00:00:00Z"
+                      ecid:
+                        type: string
+                        example: "AT00900000000RC123456000000000469"
+                      meteringPoint:
+                        type: string
+                        example: "AT987654321098765432"
+                      energyDirection:
+                        type: string
+                        example: "CONSUMPTION"
+                      measurementUnit:
+                        type: string
+                        example: "Wh"
+                      measurementIntervall:
+                        type: string
+                        example: "QH"
+                      measurement:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            Gesamtverbauch:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  MessZeitPunktStart:
+                                    type: string
+                                    format: date-time
+                                    example: "2025-04-22T00:00:00Z"
+                                  MessZeitPunktEnde:
+                                    type: string
+                                    format: date-time
+                                    example: "2025-04-22T00:15:00Z"
+                                  Gesamtverbrauch:
+                                    type: number
+                                    example: 210.75
+                            VerfügbareGemeinschaftlicheErzeugung:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  MessZeitPunktStart:
+                                    type: string
+                                    format: date-time
+                                    example: "2025-04-22T00:15:00Z"
+                                  MessZeitPunktEnde:
+                                    type: string
+                                    format: date-time
+                                    example: "2025-04-22T00:30:00Z"
+                                  VerfügbareGemeinschaftlicheErzeugung:
+                                    type: number
+                                    example: 85.6
+                            Eigenverbrauch:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  MessZeitPunktStart:
+                                    type: string
+                                    format: date-time
+                                    example: "2025-04-22T00:30:00Z"
+                                  MessZeitPunktEnde:
+                                    type: string
+                                    format: date-time
+                                    example: "2025-04-22T00:45:00Z"
+                                  Eigenverbrauch:
+                                    type: number
+                                    example: 65.3
+                            VerbrauchLautTeilnahmefaktor:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  MessZeitPunktStart:
+                                    type: string
+                                    format: date-time
+                                    example: "2025-04-22T00:45:00Z"
+                                  MessZeitPunktEnde:
+                                    type: string
+                                    format: date-time
+                                    example: "2025-04-22T01:00:00Z"
+                                  VerbrauchLautTeilnahmefaktor:
+                                    type: number
+                                    example: 50.0
+                            EigenversorgungAusErneuerbarenEnergien:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  MessZeitPunktStart:
+                                    type: string
+                                    format: date-time
+                                    example: "2025-04-22T01:00:00Z"
+                                  MessZeitPunktEnde:
+                                    type: string
+                                    format: date-time
+                                    example: "2025-04-22T01:15:00Z"
+                                  EigenversorgungAusErneuerbarenEnergien:
+                                    type: number
+                                    example: 30.5
