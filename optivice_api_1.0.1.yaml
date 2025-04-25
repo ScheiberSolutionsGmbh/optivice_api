@@ -1,7 +1,22 @@
 openapi: 3.0.1
 info:
-  title: Scheiber Solutions API
-  description: API for obtaining an OAuth2 bearer token using client credentials. Sending Energy and Master Data. Retrieving Forecast Data
+  title: OPTIVICE.energy API
+  description: |
+    ## 🧾 Overview
+    API for obtaining an OAuth2 bearer token using client credentials. Sending Energy and Master Data. Retrieving Forecast Data.
+
+    ## 📢 Server Selection Guide
+    Use the server dropdown to select the appropriate environment:
+
+    - 🔐 **Authentification Server**  
+      Use only for: `/openid-connect/token`
+
+    - 🌐 **Main API Server**  
+      Use for all other endpoints (e.g., `/masterData/update`, `/energy/data`, `/forecast`, `/kpi`)
+
+    If you select the wrong server, some endpoints may return errors or not respond at all.
+
+    ---
   contact:
     email: mathias.fuchs@scheiber.solutions
     x-additional_email:
@@ -20,7 +35,7 @@ servers:
     description: Authentication Server
   - url: https://app.optivice.energy/api/1.0.0/
     description: Main API
-    
+
 tags:
   - name: Authentification
     description: Endpoint for OAuth Token
@@ -32,7 +47,7 @@ tags:
     description: Endpoint for Requesting Forecast Data
   - name: KPI
     description: KPI Endpoint for Energy in Community
-    
+
 components:
   securitySchemes:
     OAuth2:
@@ -45,20 +60,20 @@ components:
             energy_data: Sends Timeseries data
             forecast_auth: Retrieves Forecast Timeseries data
             kpi_auth: Retrieves KPI´s
-            
+
   schemas:
     EnergyData:
       type: object
       properties:
         data:
-          $ref: '#/components/schemas/energy_data'
-    
+          $ref: "#/components/schemas/energy_data"
+
     energy_data:
       type: object
       properties:
         energyRecord:
-          $ref: '#/components/schemas/energyRecord'
-    
+          $ref: "#/components/schemas/energyRecord"
+
     energyRecord:
       type: object
       properties:
@@ -70,7 +85,7 @@ components:
           type: array
           description: Energy data readings
           items:
-            $ref: '#/components/schemas/energyData'
+            $ref: "#/components/schemas/energyData"
         meteringIntervall:
           type: string
           description: Measurement interval (QH = Quarter Hour)
@@ -95,7 +110,6 @@ components:
           description: Metering point for identification
           example: "AT0010000000000000000000000000000"
 
-
     energyData:
       type: object
       properties:
@@ -103,7 +117,7 @@ components:
           type: array
           description: Energy Production/Consumption Records, based on Meter Codes
           items:
-            $ref: '#/components/schemas/EP'
+            $ref: "#/components/schemas/EP"
         UOM:
           type: string
           description: Unit of measurement (e.g., kWh)
@@ -148,15 +162,13 @@ components:
           MM: "L2"
           DTF: "2025-01-28T00:30:00+01:00"
           DTT: "2025-01-28T00:45:00+01:00"
-    
-          
-    
+
     MasterData:
       type: object
       properties:
         community:
-          $ref: '#/components/schemas/community'
-    
+          $ref: "#/components/schemas/community"
+
     community:
       type: object
       properties:
@@ -174,9 +186,9 @@ components:
           example: "EEG"
         users:
           type: array
-          items: 
+          items:
             $ref: "#/components/schemas/users"
-      
+
     users:
       type: object
       properties:
@@ -191,10 +203,10 @@ components:
           example: "max.mustermann@email.com"
         objects:
           type: array
-          description: A Single Object -> House. Array of Objects -> House1, House2.. 
-          items: 
-            $ref: '#/components/schemas/objects'
-      
+          description: A Single Object -> House. Array of Objects -> House1, House2..
+          items:
+            $ref: "#/components/schemas/objects"
+
     objects:
       type: object
       properties:
@@ -217,9 +229,9 @@ components:
         meteringPoints:
           type: array
           description: A Single Metering Point or an Array of Metering Points
-          items: 
-            $ref: '#/components/schemas/meteringPoints'
-          
+          items:
+            $ref: "#/components/schemas/meteringPoints"
+
     meteringPoints:
       type: object
       properties:
@@ -243,9 +255,8 @@ components:
           type: array
           description: How much activations and/or deactivations where in this community. 1 or more
           items:
-            $ref: '#/components/schemas/activations'
-        
-          
+            $ref: "#/components/schemas/activations"
+
     activations:
       type: object
       properties:
@@ -261,13 +272,13 @@ components:
           type: string
           description: Participation Factor in this community. 0-100%
           example: "80"
-          
+
     Forecast:
       type: object
       properties:
         data:
-          $ref: '#/components/schemas/forecastData'
-            
+          $ref: "#/components/schemas/forecastData"
+
     forecastData:
       type: object
       properties:
@@ -281,7 +292,7 @@ components:
           example: "AT0010000000000000000000000000000"
         energyDirection:
           type: string
-          description: Energy Direction #todo better name -> which result is needed from the 3 tables? 
+          description: Energy Direction #todo better name -> which result is needed from the 3 tables?
           example: "GENERATION"
         measurementUnit:
           type: string
@@ -295,8 +306,8 @@ components:
           type: array
           description: Main forecast data
           items:
-            $ref: '#/components/schemas/forecastItem'
-            
+            $ref: "#/components/schemas/forecastItem"
+
     forecastItem:
       type: object
       properties:
@@ -312,8 +323,7 @@ components:
           type: string
           description: Datetime when the forecast was generated.
           example: "2025-02-25 14:08:15+00:00"
-          
-    
+
     kpi:
       type: object
       properties:
@@ -366,12 +376,6 @@ components:
           type: string
           example: "11"
           description: ""
-        
-        
-          
-        
-      
-
 
 paths:
   /openid-connect/token:
@@ -400,7 +404,7 @@ paths:
                   example: "master_data"
             examples:
               master_data:
-                summary: This is for master_data -> User data, objects, meteringpoints, etc... 
+                summary: This is for master_data -> User data, objects, meteringpoints, etc...
                 value:
                   grant_type: "client_credentials"
                   client_id: "your-client-id"
@@ -441,7 +445,7 @@ paths:
           description: Invalid request (e.g., missing credentials)
         "401":
           description: Unauthorized (invalid credentials)
-          
+
   /masterData/update:
     post:
       tags:
@@ -456,13 +460,13 @@ paths:
         required: true
       security:
         - OAuth2:
-          - master_data
+            - master_data
       responses:
         "200":
           description: Success
         "400":
           description: Invalid Request Format
-          
+
   /energy/data:
     post:
       tags:
@@ -473,10 +477,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EnergyData'
+              $ref: "#/components/schemas/EnergyData"
       security:
         - OAuth2:
-          - energy_data
+            - energy_data
       responses:
         "200":
           description: Success
@@ -511,19 +515,19 @@ paths:
             example: "2025-03-04"
       security:
         - OAuth2:
-          - forecast_auth
+            - forecast_auth
       responses:
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Forecast'
+                $ref: "#/components/schemas/Forecast"
         "400":
           description: Bad Request (Invalid parameters)
         "500":
           description: Internal Server Error
-          
+
   /kpi:
     get:
       tags:
@@ -565,17 +569,3 @@ paths:
                 $ref: "#/components/schemas/kpi"
         "400":
           description: Bad Request (Invalid Parameters)
-
-        
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-
