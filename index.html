@@ -18,6 +18,19 @@
       href="dist/favicon-16x16.png"
       sizes="16x16"
     />
+    <style>
+      .swagger-ui .topbar {
+        background-color: #eaebe7;
+      }
+      .topbar-wrapper a {
+        content: url("optivice_energy_logo_light.1a9de395.png") !important;
+        height: 60px;
+      }
+      .select-label {
+        color: black !important;
+        font-weight: bold;
+      }
+    </style>
   </head>
 
   <body>
@@ -31,13 +44,28 @@
         urls: [
           { url: "optivice_api_1.0.0.yaml", name: "API 1.0.0" },
           { url: "optivice_api_1.0.1.yaml", name: "API 1.0.1" },
-          { url: "billing.yaml", name: "Billing Test API" },
+          // { url: "billing.yaml", name: "Billing Test API" },
+          { url: "wip_optivice_api_1.0.2.yaml", name: "WIP API 1.0.2" },
           // { url: "api3.yaml", name: "Experimental API" },
         ],
         dom_id: "#swagger-ui",
         presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
         layout: "StandaloneLayout",
       });
+      setTimeout(() => {
+        // Change the logo link destination
+        const logoLink = document.querySelector(".topbar-wrapper a");
+        if (logoLink) {
+          logoLink.href = "https://optivice.energy";
+          logoLink.target = "_blank"; // Optional: open in new tab
+          logoLink.title = "Go to Optivice Website"; // Optional: tooltip
+        }
+
+        const labelSpan = document.querySelector(".select-label > span");
+        if (labelSpan) {
+          labelSpan.textContent = "Select API Version here";
+        }
+      }, 50);
     </script>
   </body>
 </html>
