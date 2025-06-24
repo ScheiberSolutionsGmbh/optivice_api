@@ -43,6 +43,8 @@ servers:
     description: Authentification Server
   - url: https://app.optivice.energy/api/1.0.0/
     description: Main API
+  - url: https://app.optivice.energy/api/1.0.2/
+    description: Main API
 
 tags:
   - name: Authentification
