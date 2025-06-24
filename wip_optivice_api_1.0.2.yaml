@@ -13,7 +13,9 @@ info:
       Use only for: `/openid-connect/token`
 
     - 🌐 **Main API Server**  
-      Use for all other endpoints (e.g., `/masterData/update`, `/energy/data`, `/forecast`, `/kpi`, `/smart-meter-generation`, `/smart-meter-consumption`)
+      Use for all other endpoints (e.g., `/masterData/update`, `/energy/data`, `/forecast`, `/kpi`, `/smart-meter-data`)
+
+    - !! Mapping for OBIS Code in smart-meter-data -> https://energiegemeinschaften.gv.at/obis-code-anpassung-zum-08-04-2024/
 
     If you select the wrong server, some endpoints may return errors or not respond at all.
 
@@ -53,10 +55,8 @@ tags:
     description: Endpoint for Requesting Forecast Data
   - name: KPI
     description: KPI Endpoint for Energy in Community
-  - name: Smartmeter Generation
-    description: Endpoint to get Smartmeter Data from Generation
-  - name: Smartmeter Consumption
-    description: Endpoint to get Smartmeter Data from Consumption
+  - name: Smartmeter
+    description: Unified endpoint for both generation and consumption smart meter data
 
 components:
   securitySchemes:
@@ -395,6 +395,7 @@ components:
         processingDate:
           type: string
           format: date-time
+          example: 2025-01-01T23:00:00+00:00
         ecid:
           type: string
           example: "AT000000RC1234560000000000000000"
@@ -402,15 +403,16 @@ components:
           type: string
         dateFrom:
           type: string
-          format: date-time
+          format: date
         dateTo:
           type: string
-          format: date-time
+          format: date
         energyDirection:
           type: string
           example: "GENERATION"
         measurementUnit:
           type: string
+          example: "kWh"
         measurementIntervall:
           type: string
           example: "QH"
@@ -419,54 +421,48 @@ components:
           items:
             type: object
             properties:
-              Gesamterzeugung:
+              1-1:2.9.0 G.01:
                 type: array
                 items:
                   type: object
                   properties:
-                    MessZeitPunktStart:
+                    measuringStart:
                       type: string
                       format: date-time
-                    MessZeitPunktEnde:
-                      type: string
-                      format: date-time
-                    Gesamterzeugung:
+                      example: 2025-01-01T23:00:00+00:00
+                    value:
                       type: number
-                    Datenqualität:
+                    dataQuality:
                       type: string
                       enum: [L1, L2, L3]
                       example: "L1"
-              UeberschussInNetz:
+              1-1:2.9.0 P.01T:
                 type: array
                 items:
                   type: object
                   properties:
-                    MessZeitPunktStart:
+                    measuringStart:
                       type: string
                       format: date-time
-                    MessZeitPunktEnde:
-                      type: string
-                      format: date-time
-                    UeberschussInNetz:
+                      example: 2025-01-01T23:00:00+00:00
+                    value:
                       type: number
-                    Datenqualität:
+                    dataQuality:
                       type: string
                       enum: [L1, L2, L3]
                       example: "L1"
-              ErzeugungLautTeilnahmefaktor:
+              1-1:2.9.0 G.01T:
                 type: array
                 items:
                   type: object
                   properties:
-                    MessZeitPunktStart:
+                    measuringStart:
                       type: string
                       format: date-time
-                    MessZeitPunktEnde:
-                      type: string
-                      format: date-time
-                    ErzeugungLautTeilnahmefaktor:
+                      example: 2025-01-01T23:00:00+00:00
+                    value:
                       type: number
-                    Datenqualität:
+                    dataQuality:
                       type: string
                       enum: [L1, L2, L3]
                       example: "L1"
@@ -478,21 +474,23 @@ components:
         processingDate:
           type: string
           format: date-time
+          example: 2025-01-01T23:00:00+00:00
         ecid:
           type: string
         meteringPoint:
           type: string
         dateFrom:
           type: string
-          format: date-time
+          format: date
         dateTo:
           type: string
-          format: date-time
+          format: date
         energyDirection:
           type: string
           example: "CONSUMPTION"
         measurementUnit:
           type: string
+          example: "kWh"
         measurementIntervall:
           type: string
           example: "QH"
@@ -501,88 +499,78 @@ components:
           items:
             type: object
             properties:
-              Gesamtverbauch:
+              1-1:1.9.0 G.01:
                 type: array
                 items:
                   type: object
                   properties:
-                    MessZeitPunktStart:
+                    measuringStart:
                       type: string
                       format: date-time
-                    MessZeitPunktEnde:
-                      type: string
-                      format: date-time
-                    Gesamtverbrauch:
+                      example: 2025-01-01T23:00:00+00:00
+                    value:
                       type: number
-                    Datenqualität:
+                    dataQuality:
                       type: string
                       enum: [L1, L2, L3]
                       example: "L1"
-              VerfügbareGemeinschaftlicheErzeugung:
+              1-1:2.9.0 G.02:
                 type: array
                 items:
                   type: object
                   properties:
-                    MessZeitPunktStart:
+                    measuringStart:
                       type: string
                       format: date-time
-                    MessZeitPunktEnde:
-                      type: string
-                      format: date-time
-                    VerfügbareGemeinschaftlicheErzeugung:
+                      example: 2025-01-01T23:00:00+00:00
+                    value:
                       type: number
-                    Datenqualität:
+                    dataQuality:
                       type: string
                       enum: [L1, L2, L3]
                       example: "L1"
-              Eigenverbrauch:
+              1-1:2.9.0 G.03:
                 type: array
                 items:
                   type: object
                   properties:
-                    MessZeitPunktStart:
+                    measuringStart:
                       type: string
                       format: date-time
-                    MessZeitPunktEnde:
-                      type: string
-                      format: date-time
-                    Eigenverbrauch:
+                      example: 2025-01-01T23:00:00+00:00
+                    value:
                       type: number
-                    Datenqualität:
+                    dataQuality:
                       type: string
                       enum: [L1, L2, L3]
                       example: "L1"
-              VerbrauchLautTeilnahmefaktor:
+              1-1:1.9.0 G.01T:
                 type: array
                 items:
                   type: object
                   properties:
-                    MessZeitPunktStart:
+                    measuringStart:
                       type: string
                       format: date-time
-                    MessZeitPunktEnde:
-                      type: string
-                      format: date-time
-                    VerbrauchLautTeilnahmefaktor:
+                      example: 2025-01-01T23:00:00+00:00
+                    value:
                       type: number
-                    Datenqualität:
+                    dataQuality:
                       type: string
                       enum: [L1, L2, L3]
                       example: "L1"
-              EigenversorgungAusErneuerbarenEnergien:
+              1-1:2.9.0 G.03R:
                 type: array
                 items:
                   type: object
                   properties:
-                    MessZeitPunktStart:
+                    measuringStart:
                       type: string
                       format: date-time
-                    MessZeitPunktEnde:
-                      type: string
-                      format: date-time
-                    EigenversorgungAusErneuerbarenEnergien:
+                      example: 2025-01-01T23:00:00+00:00
+                    value:
                       type: number
-                    Datenqualität:
+                    dataQuality:
                       type: string
                       enum: [L1, L2, L3]
                       example: "L1"
@@ -748,7 +736,7 @@ paths:
 
   /kpi:
     servers:
-      - url: https://app.optivice.energy/api/1.0.0/
+      - url: https://app.optivice.energy/api/1.0.2/
     get:
       tags:
         - KPI
@@ -790,13 +778,15 @@ paths:
         "400":
           description: Bad Request (Invalid Parameters)
 
-  /smart-meter-generation:
+  /smartmeter-data:
     servers:
-      - url: https://app.optivice.energy/api/1.0.0/
+      - url: https://app.optivice.energy/api/1.0.2/
     get:
       tags:
-        - Smartmeter Generation
-      summary: Get smart meter generation data
+        - Smartmeter
+      summary: Get smart meter data (auto-detect generation or consumption)
+      description: |
+        Unified endpoint to retrieve smart meter data. The API will determine whether the data is for generation or consumption based on the metering point context.
       parameters:
         - name: ecid
           in: query
@@ -815,92 +805,30 @@ paths:
           required: true
           schema:
             type: string
-            format: date-time
-            example: "2025-01-01 00:00:00"
+            format: date
+            example: "2025-01-01"
         - name: dateTo
           in: query
           required: true
           schema:
             type: string
-            format: date-time
-            example: "2025-01-31 00:00:00"
-        - name: energyDirection
-          in: query
-          required: true
-          schema:
-            type: string
-            example: "GENERATION"
+            format: date
+            example: "2025-01-31"
       security:
         - OAuth2:
             - meter_data
       responses:
         "200":
-          description: Smart meter generation data
+          description: Smart meter data for generation or consumption
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   data:
-                    $ref: "#/components/schemas/SmartMeterGenerationData"
-        "400":
-          description: Bad Request (Invalid Parameters)
-        "500":
-          description: Internal Server Error
-
-  /smart-meter-consumption:
-    servers:
-      - url: https://app.optivice.energy/api/1.0.0/
-    get:
-      tags:
-        - Smartmeter Consumption
-      summary: Get smart meter consumption data
-      parameters:
-        - name: ecid
-          in: query
-          required: true
-          schema:
-            type: string
-            example: "AT000000RC1234560000000000000000"
-        - name: meteringPoint
-          in: query
-          required: true
-          schema:
-            type: string
-            example: "AT0010000000000000000000000000000"
-        - name: dateFrom
-          in: query
-          required: true
-          schema:
-            type: string
-            format: date-time
-            example: "2025-01-01 00:00:00"
-        - name: dateTo
-          in: query
-          required: true
-          schema:
-            type: string
-            format: date-time
-            example: "2025-01-31 00:00:00"
-        - name: energyDirection
-          in: query
-          required: true
-          schema:
-            type: string
-            example: "CONSUMPTION"
-      security:
-        - OAuth2:
-            - meter_data
-      responses:
-        "200":
-          description: Smart meter consumption data
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/SmartMeterConsumptionData"
+                    oneOf:
+                      - $ref: "#/components/schemas/SmartMeterGenerationData"
+                      - $ref: "#/components/schemas/SmartMeterConsumptionData"
         "400":
           description: Bad Request (Invalid Parameters)
         "500":
