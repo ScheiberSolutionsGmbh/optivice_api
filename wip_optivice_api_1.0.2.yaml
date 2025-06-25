@@ -12,8 +12,11 @@ info:
     - 🔐 **Authentification Server**  
       Use only for: `/openid-connect/token`
 
-    - 🌐 **Main API Server**  
-      Use for all other endpoints (e.g., `/masterData/update`, `/energy/data`, `/forecast`, `/kpi`, `/smart-meter-data`)
+    - 🌐 **Main API Server 1.0.0**  
+      Use for all other endpoints (e.g., `/masterData/update`, `/energy/data`, `/forecast`)
+
+    - 🌐 **Main API Server 1.0.2**  
+      Use for all other endpoints (e.g., `/kpi`, `/smart-meter-data`)
 
     - !! Mapping for OBIS Code in smart-meter-data -> https://energiegemeinschaften.gv.at/obis-code-anpassung-zum-08-04-2024/
 
