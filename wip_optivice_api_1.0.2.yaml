@@ -293,7 +293,9 @@ components:
       type: object
       properties:
         data:
-          $ref: "#/components/schemas/forecastData"
+          oneOf:
+            - $ref: "#/components/schemas/forecastData"
+            - $ref: "#/components/schemas/forecastEcidData"
 
     forecastData:
       type: object
@@ -316,11 +318,41 @@ components:
           example: "Wh"
         forecastInterval:
           type: string
-          description: Which Intervall should be generated. QH, Daily...
+          description: Interval (QH = Quarter Hour, H = Hourly)
           example: "QH"
         forecast:
           type: array
           description: Main forecast data
+          items:
+            $ref: "#/components/schemas/forecastItem"
+
+    forecastEcidData:
+      type: object
+      properties:
+        processingDate:
+          type: string
+          description: Date the Request was Generated
+          example: "2025-02-25 15:50:12.485673"
+        ecid:
+          type: string
+          description: ECID of the energy community for which the forecast was generated
+          example: "AT000000RC1234560000000000000000"
+        measurementUnit:
+          type: string
+          description: Unit in which the forecast is generated
+          example: "Wh"
+        forecastInterval:
+          type: string
+          description: Interval (QH = Quarter Hour, H = Hourly)
+          example: "H"
+        generationForecast:
+          type: array
+          description: Generation forecast data for the energy community
+          items:
+            $ref: "#/components/schemas/forecastItem"
+        consumptionForecast:
+          type: array
+          description: Consumption forecast data for the energy community
           items:
             $ref: "#/components/schemas/forecastItem"
 
@@ -342,56 +374,79 @@ components:
 
     kpi:
       type: object
+      description: "Alle Energiewerte sind in Wh"
       properties:
-        ecid:
-          type: string
-          description: ECID
-          example: "AT00100000000RC123456000000000000"
-        dateFrom:
-          type: string
-          example: "2025-01-01"
-        dateTo:
-          type: string
-          example: "2025-01-07"
-        unit:
-          type: string
-          example: "kWH"
+        # ecid:
+        #   type: string
+        #   description: ECID
+        #   example: "AT00100000000RC123456000000000000"
+        # dateFrom:
+        #   type: string
+        #   example: "2025-01-01"
+        # dateTo:
+        #   type: string
+        #   example: "2025-01-07"
+        # unit:
+        #   type: string
+        #   example: "Wh"
+        gesamtbezug:
+          type: integer
+          example: 23000
+          description: ""
+        eg_bezug:
+          type: integer
+          example: 12000
+          description: ""
+        gesamteinspeisung:
+          type: integer
+          example: 15000
+          description: ""
         netzeinspeisung:
-          type: string
-          example: "23,2"
-          description: ""
-        netzbezug:
-          type: string
-          example: "2,2"
-          description: ""
-        einspeisungEG:
-          type: string
-          example: "12"
-          description: ""
-        bezugEG:
-          type: string
-          example: "4,2"
-          description: ""
-        ueberschuss:
-          type: string
-          example: "8"
-          description: ""
-        bedarf:
-          type: string
-          example: "0"
+          type: integer
+          example: 5000
           description: ""
         erzeugung:
-          type: string
-          example: "33"
+          type: integer
+          example: 25000
           description: ""
         verbrauch:
-          type: string
-          example: "12"
+          type: integer
+          example: 40000
           description: ""
         eigenverbrauch:
-          type: string
-          example: "11"
+          type: integer
+          example: 10000
           description: ""
+        eg_einspeisung:
+          type: integer
+          example: 10000
+          description: ""
+        netzbezug:
+          type: integer
+          example: 11000
+          description: ""
+        ueberschuss:
+          type: integer
+          example: 15000
+          description: ""
+        bedarf:
+          type: integer
+          example: 40000
+          description: ""
+        nutzungsgrad:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          example: 0.67
+          description: "nutzungsgrad in der Energiegemeinschaft als float zwischen 0 und 1"
+        autarkiegrad:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          example: 0.55
+          description: "Autarkiegrad der Energiegemeinschaft als float zwischen 0 und 1"
 
     SmartMeterGenerationData:
       type: object
@@ -700,18 +755,30 @@ paths:
       tags:
         - Forecast
       summary: Retrieve forecast data
-      description: Returns forecast data based on query parameters.
+      description: |
+        Returns forecast data based on query parameters. Either meteringPoint or ecid must be provided.
+        
+        - When requesting by **meteringPoint**: Returns forecast data for a specific metering point
+        - When requesting by **ecid**: Returns both generation and consumption forecast data for the entire energy community
       parameters:
         - name: meteringPoint
           in: query
-          required: true
+          required: false
           description: "Metering point ID to filter the forecast data."
           schema:
             type: string
+            example: "AT0010000000000000000000000000123"
+        - name: ecid
+          in: query
+          required: false
+          description: "ECID of the community of which the forecast is requested."
+          schema:
+            type: string
+            example: "AT00100000000RC123456000000000123"
         - name: dateFrom
           in: query
           required: true
-          description: "Start date of the forecast range (YYYY-MM-DD)."
+          description: "Start date of the forecast range (YYYY-MM-DD, YYYY-MM-DDTHH:MM:SS, or ISO 8601 with timezone)"
           schema:
             type: string
             format: date
@@ -719,7 +786,7 @@ paths:
         - name: dateTo
           in: query
           required: true
-          description: "End date of the forecast range (YYYY-MM-DD)."
+          description: "End date of the forecast range (YYYY-MM-DD, YYYY-MM-DDTHH:MM:SS, or ISO 8601 with timezone)."
           schema:
             type: string
             format: date
@@ -734,6 +801,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Forecast"
+              examples:
+                meteringPointResponse:
+                  summary: Response when requesting by meteringPoint
+                  value:
+                    data:
+                      processingDate: "2025-02-25 15:50:12.485673"
+                      meteringPoint: "AT0010000000000000000000000000000"
+                      energyDirection: "GENERATION"
+                      measurementUnit: "Wh"
+                      forecastInterval: "QH"
+                      forecast:
+                        - forecastDate: "2025-03-04 12:30:00+00:00"
+                          forecastValue: "17872.35"
+                          dateModified: "2025-02-25 14:08:15+00:00"
+                ecidResponse:
+                  summary: Response when requesting by ecid (energy community)
+                  value:
+                    data:
+                      processingDate: "2025-02-25 15:50:12.485673"
+                      ecid: "AT000000RC1234560000000000000000"
+                      measurementUnit: "Wh"
+                      forecastInterval: "H"
+                      generationForecast:
+                        - forecastDate: "2025-03-04 12:30:00+00:00"
+                          forecastValue: "17872.35"
+                          dateModified: "2025-02-25 14:08:15+00:00"
+                      consumptionForecast:
+                        - forecastDate: "2025-03-04 12:30:00+00:00"
+                          forecastValue: "25123.45"
+                          dateModified: "2025-02-25 14:08:15+00:00"
         "400":
           description: Bad Request (Invalid parameters)
         "500":
@@ -746,7 +843,7 @@ paths:
       tags:
         - KPI
       summary: Retrieve Kpi Data
-      description: Returns a variety of KPIs based on query parameters.
+      description: Returns a variety of KPIs based on query parameters. Unit is Wh.
       parameters:
         - name: ecid
           in: query
@@ -757,7 +854,7 @@ paths:
         - name: dateFrom
           in: query
           required: true
-          description: "Start date of the KPI range (YYYY-MM-DD)"
+          description: "Start date of the KPI range (YYYY-MM-DD, YYYY-MM-DDTHH:MM:SS, or ISO 8601 with timezone)"
           schema:
             type: string
             format: date
@@ -765,7 +862,7 @@ paths:
         - name: dateTo
           in: query
           required: true
-          description: "End date of the KPI range (YYYY-MM-DD)"
+          description: "End date of the KPI range (YYYY-MM-DD, YYYY-MM-DDTHH:MM:SS, or ISO 8601 with timezone)"
           schema:
             type: string
             format: date
