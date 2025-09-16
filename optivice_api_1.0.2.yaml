@@ -10,7 +10,7 @@ info:
     ## Servers
     Use the server dropdown to select the appropriate environment:
 
-    - 🔐 **Authentification Server**  
+    - 🔐 **Authentication Server**  
       Use only for: `/openid-connect/token`
 
     - 🌐 **Main API Server 1.0.2**  
@@ -39,12 +39,12 @@ info:
 
 servers:
   - url: https://login.optivice.energy/realms/app.optivice.energy/protocol
-    description: Authentification Server
+    description: Authentication Server
   - url: https://app.optivice.energy/api/1.0.2/
     description: Main API
 
 tags:
-  - name: Authentification
+  - name: Authentication
     description: Endpoint for OAuth Token
   - name: Master Data
     description: Endpoint for Pushing Master Data -> User Data
@@ -635,7 +635,7 @@ paths:
       - url: https://login.optivice.energy/realms/app.optivice.energy/protocol
     post:
       tags:
-        - Authentification
+        - Authentication
       summary: Get OAuth Bearer Token
       description: Obtain an access token using the client credentials flow.
       requestBody:
