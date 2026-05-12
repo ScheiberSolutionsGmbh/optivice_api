@@ -122,29 +122,30 @@ components:
 
     energyData:
       type: object
+      description: Energy readings for a specific meter code, containing all time intervals
       properties:
         EP:
           type: array
-          description: Energy Production/Consumption Records, based on Meter Codes
+          description: List of measurement intervals
           items:
-            $ref: "#/components/schemas/EP"
+            $ref: "#/components/schemas/MeasurementInterval"
         UOM:
           type: string
           description: Unit of measurement (e.g., kWh)
           example: "kWh"
         MeterCode:
           type: string
-          description: Meter code (e.g., https://www.ebutilities.at/documents/20200304112759_MeterCodes_ConsumptionRecord.pdf)
+          description: OBIS meter code identifying the type of measurement (e.g., https://www.ebutilities.at/documents/20200304112759_MeterCodes_ConsumptionRecord.pdf)
           example: "1-1:2.9.0 G.01"
 
-    EP:
+    MeasurementInterval:
       type: object
-      description: List of energy data points
+      description: Single measurement interval (e.g., 15-minute period) with energy value and quality
       properties:
         BQ:
-          type: string
+          type: number
           description: Billing Quantity. Measurement Value for billing in a community
-          example: "132"
+          example: 132
         MM:
           type: string
           description: Measurement Quality (L1 = best, L2 = ok, L3 = worst)
@@ -159,19 +160,6 @@ components:
           format: date-time
           description: End time of measurement
           example: "2025-01-28T00:15:00+01:00"
-      example:
-        - BQ: 0
-          MM: "L3"
-          DTF: "2025-01-28T00:00:00+01:00"
-          DTT: "2025-01-28T00:15:00+01:00"
-        - BQ: 250
-          MM: "L1"
-          DTF: "2025-01-28T00:15:00+01:00"
-          DTT: "2025-01-28T00:30:00+01:00"
-        - BQ: 120
-          MM: "L2"
-          DTF: "2025-01-28T00:30:00+01:00"
-          DTT: "2025-01-28T00:45:00+01:00"
 
     MasterData:
       type: object
