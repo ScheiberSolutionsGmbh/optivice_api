@@ -56,6 +56,8 @@ tags:
     description: KPI Endpoint for Energy in Community
   - name: Smartmeter
     description: Unified endpoint for both generation and consumption smart meter data
+  - name: Community Activations
+    description: Endpoint for retrieving metering point activation history within an energy community
 
 components:
   securitySchemes:
@@ -509,6 +511,86 @@ components:
                       enum: [L1, L2, L3]
                       example: "L1"
 
+    SmartMeterActivationsResponse:
+      type: object
+      description: Response containing all metering point activations (current and historical) for an energy community
+      properties:
+        ProcessingDate:
+          type: string
+          format: date-time
+          description: Datetime when the response was generated (UTC)
+          example: "2026-07-20T14:49:36.980090+00:00"
+        ECID:
+          type: string
+          description: Technical identification for the energy community
+          example: "AT000000RC1234560000000000000000"
+        ECType:
+          type: string
+          description: Type of the energy community (GC, RC_L, RC_R, CC)
+          example: "RC_L"
+        ECDisModel:
+          type: string
+          description: Distribution model of the energy community
+          example: "D"
+        MPListData:
+          type: array
+          description: List of metering points with their activation periods
+          items:
+            $ref: "#/components/schemas/MPListEntry"
+
+    MPListEntry:
+      type: object
+      description: A single metering point with all its activation periods
+      properties:
+        MeteringPoint:
+          type: string
+          description: Metering point identifier (AT00... 33 characters)
+          example: "AT0010000000000000000000000000000"
+        MPTimeData:
+          type: array
+          description: Chronological list of activation periods for this metering point
+          items:
+            $ref: "#/components/schemas/MPTimeEntry"
+
+    MPTimeEntry:
+      type: object
+      description: A single activation period for a metering point within the community
+      required: [DateFrom, DateTo, EnergyDirection, ECPartFact, DateActivate]
+      properties:
+        DateFrom:
+          type: string
+          format: date
+          description: Start date of the activation period
+          example: "2023-07-05"
+        DateTo:
+          type: string
+          format: date
+          description: End date of the activation period. "9999-12-31" indicates open-ended
+          example: "9999-12-31"
+        EnergyDirection:
+          type: string
+          description: Energy direction for this metering point
+          enum: [GENERATION, CONSUMPTION]
+          example: "CONSUMPTION"
+        ECPartFact:
+          type: string
+          description: Participation factor in the community (1-100%)
+          example: "100"
+        DateActivate:
+          type: string
+          format: date
+          description: Date when the metering point was first activated in the community
+          example: "2023-07-05"
+        DateDeactivate:
+          type: string
+          format: date
+          description: Date when the metering point was deactivated (only present if deactivated)
+          example: "2024-12-31"
+        ECShare:
+          type: string
+          description: Energy community share as a decimal string
+          example: "0.0000"
+
     SmartMeterConsumptionData:
       type: object
       required: [ecid, meteringPoint, dateFrom, dateTo]
@@ -861,6 +943,76 @@ paths:
                 $ref: "#/components/schemas/kpi"
         "400":
           description: Bad Request (Invalid Parameters)
+
+  /smartmeter-activations:
+    servers:
+      - url: https://app.optivice.energy/api/1.0.2/
+    get:
+      tags:
+        - Community Activations
+      summary: Get all smart meter activations for a community
+      description: |
+        Retrieve all metering point activations (current and historical) for a given energy community.
+        Returns top-level community metadata (ECID, ECType, ECDisModel) and a list of all metering points
+        with their chronological activation periods, including participation factor, energy direction,
+        and optional deactivation date and community share.
+
+        Note that the response is built from data provided by grid operators and can therefore contain inconsistencies or outdated information.
+      parameters:
+        - name: ecid
+          in: query
+          required: true
+          description: "ECID of the energy community for which activations are requested"
+          schema:
+            type: string
+            example: "AT000000RC1234560000000000000000"
+      security:
+        - OAuth2:
+            - meter_data
+      responses:
+        "200":
+          description: Successfully retrieved smart meter activations for the community
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SmartMeterActivationsResponse"
+              examples:
+                communityActivations:
+                  summary: Community with generation and consumption metering points
+                  value:
+                    ProcessingDate: "2026-07-20T14:49:36.980090+00:00"
+                    ECID: "AT000000RC1234560000000000000000"
+                    ECType: "RC_L"
+                    ECDisModel: "D"
+                    MPListData:
+                      - MeteringPoint: "AT0010000000000000000000000000001"
+                        MPTimeData:
+                          - DateFrom: "2023-07-05"
+                            DateTo: "9999-12-31"
+                            EnergyDirection: "GENERATION"
+                            ECPartFact: "100"
+                            DateActivate: "2023-07-05"
+                            ECShare: "0.0000"
+                      - MeteringPoint: "AT0010000000000000000000000000002"
+                        MPTimeData:
+                          - DateFrom: "2023-07-05"
+                            DateTo: "2024-07-16"
+                            EnergyDirection: "CONSUMPTION"
+                            ECPartFact: "100"
+                            DateActivate: "2023-07-05"
+                            ECShare: "0.0000"
+                          - DateFrom: "2024-07-17"
+                            DateTo: "9999-12-31"
+                            EnergyDirection: "CONSUMPTION"
+                            ECPartFact: "90"
+                            DateActivate: "2023-07-05"
+                            ECShare: "0.0000"
+        "400":
+          description: Bad Request (Invalid Parameters)
+        "404":
+          description: Not Found (Community not found or no permission)
+        "500":
+          description: Internal Server Error
 
   /smartmeter-data:
     servers:
