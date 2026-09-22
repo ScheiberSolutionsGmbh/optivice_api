@@ -14,7 +14,7 @@ info:
       Use only for: `/openid-connect/token`
 
     - 🌐 **Main API Server 1.0.2**  
-      Use for all other endpoints (`/masterData/update`, `/energy/data`, `/forecast`, `/kpi`, `/smart-meter-data`)
+      Use for all other endpoints (`/masterData/update`, `/energy/data`, `/forecast`, `/kpi`, `/smartmeter-data`, `/smartmeter-activations`)
 
     Mapping for OBIS codes -> https://energiegemeinschaften.gv.at/obis-code-anpassung-zum-08-04-2024/
 
@@ -45,19 +45,19 @@ servers:
 
 tags:
   - name: Authentication
-    description: Endpoint for OAuth Token
+    description: Obtain OAuth2 access tokens
   - name: Master Data
-    description: Endpoint for Pushing Master Data -> User Data
+    description: Manage master data for communities and users
   - name: Energy Data
-    description: Endpoint for Pushing Energy Data -> timeseries
+    description: Submit energy timeseries data
   - name: Forecast
-    description: Endpoint for Requesting Forecast Data
+    description: Retrieve forecast timeseries data
   - name: KPI
-    description: KPI Endpoint for Energy in Community
+    description: Retrieve energy community KPIs
   - name: Smartmeter
-    description: Unified endpoint for both generation and consumption smart meter data
+    description: Retrieve smartmeter timeseries data
   - name: Community Activations
-    description: Endpoint for retrieving metering point activation history within an energy community
+    description: Retrieve metering point activation history for a community
 
 components:
   securitySchemes:
@@ -183,7 +183,7 @@ components:
           example: "EEG am Wald"
         communityType:
           type: string
-          description: Type of the Communtiy -> EEG, BEG, GEA
+          description: Type of the Community -> EEG, BEG, GEA
           example: "EEG"
         users:
           type: array
@@ -295,7 +295,7 @@ components:
           example: "AT0010000000000000000000000000000"
         energyDirection:
           type: string
-          description: Energy Direction #todo better name -> which result is needed from the 3 tables?
+          description: Energy direction of the forecast (GENERATION or CONSUMPTION)
           example: "GENERATION"
         measurementUnit:
           type: string
@@ -359,21 +359,8 @@ components:
 
     kpi:
       type: object
-      description: "Alle Energiewerte sind in Wh"
+      description: "All energy values are in Wh"
       properties:
-        # ecid:
-        #   type: string
-        #   description: ECID
-        #   example: "AT00100000000RC123456000000000000"
-        # dateFrom:
-        #   type: string
-        #   example: "2025-01-01"
-        # dateTo:
-        #   type: string
-        #   example: "2025-01-07"
-        # unit:
-        #   type: string
-        #   example: "Wh"
         gesamtbezug:
           type: integer
           example: 23000
@@ -424,17 +411,18 @@ components:
           minimum: 0
           maximum: 1
           example: 0.67
-          description: "nutzungsgrad in der Energiegemeinschaft als float zwischen 0 und 1"
+          description: "Utilization ratio of the energy community, float between 0 and 1"
         autarkiegrad:
           type: number
           format: float
           minimum: 0
           maximum: 1
           example: 0.55
-          description: "Autarkiegrad der Energiegemeinschaft als float zwischen 0 und 1"
+          description: "Self-sufficiency ratio of the energy community, float between 0 and 1"
 
     SmartMeterGenerationData:
       type: object
+      description: Generation smartmeter data, grouped by OBIS meter code (see OBIS code mapping in the API description)
       required: [ecid, meteringPoint, dateFrom, dateTo]
       properties:
         processingDate:
@@ -594,6 +582,7 @@ components:
 
     SmartMeterConsumptionData:
       type: object
+      description: Consumption smartmeter data, grouped by OBIS meter code (see OBIS code mapping in the API description)
       required: [ecid, meteringPoint, dateFrom, dateTo]
       properties:
         processingDate:
@@ -777,7 +766,7 @@ paths:
     post:
       tags:
         - Master Data
-      summary: Insert Master Data
+      summary: Insert or update community meta data
       description: |
         This endpoint can be used by partners who handle EDA communication on their own to send meta data about
         communities and their participants to OPTIVICE.energy. Posting master data does not trigger any EDA processes.
@@ -804,7 +793,7 @@ paths:
     post:
       tags:
         - Energy Data
-      summary: Insert Energy Data -> timeseries
+      summary: Insert energy timeseries data
       description: |
         This endpoint can be used by partners who handle EDA communication on their own to send energy data to OPTIVICE.energy.
         Re-sending data for the same metering point and time interval will overwrite the previous data. 
@@ -915,7 +904,7 @@ paths:
     get:
       tags:
         - KPI
-      summary: Retrieve Kpi Data
+      summary: Retrieve KPI data
       description: Returns a variety of KPIs based on query parameters. Unit is Wh.
       parameters:
         - name: ecid
@@ -959,7 +948,7 @@ paths:
     get:
       tags:
         - Community Activations
-      summary: Get all smart meter activations for a community
+      summary: Get all smartmeter activations (participating metering points) for a community
       description: |
         Retrieve all metering point activations (current and historical) for a given energy community.
         Returns top-level community metadata (ECID, ECType, ECDisModel) and a list of all metering points
@@ -1029,25 +1018,28 @@ paths:
     get:
       tags:
         - Smartmeter
-      summary: Get smart meter data (auto-detect generation or consumption)
+      summary: Get smartmeter timeseries data for a metering point in a community
       description: |
-        Unified endpoint to retrieve smart meter data. The API will determine whether the data is for generation or consumption based on the metering point context.
+        Automatically returns generation or consumption timeseries data depending on the metering point's energy direction.
       parameters:
         - name: ecid
           in: query
           required: true
+          description: "ECID of the energy community the metering point belongs to"
           schema:
             type: string
             example: "AT000000RC1234560000000000000000"
         - name: meteringPoint
           in: query
           required: true
+          description: "Metering point for which smartmeter data is requested"
           schema:
             type: string
             example: "AT0010000000000000000000000000000"
         - name: dateFrom
           in: query
           required: true
+          description: "Start date of the data range (YYYY-MM-DD)"
           schema:
             type: string
             format: date
@@ -1055,6 +1047,7 @@ paths:
         - name: dateTo
           in: query
           required: true
+          description: "End date of the data range (YYYY-MM-DD)"
           schema:
             type: string
             format: date
