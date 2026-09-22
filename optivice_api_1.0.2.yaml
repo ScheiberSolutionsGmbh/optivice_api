@@ -67,11 +67,12 @@ components:
         clientCredentials:
           tokenUrl: https://login.optivice.energy/realms/app.optivice.energy/protocol/openid-connect/token
           scopes:
-            master_data: Sends Metadata about the User
-            energy_data: Sends Timeseries data
-            forecast_auth: Retrieves Forecast Timeseries data
-            kpi_auth: Retrieves KPI´s
-            meter_data: Get Smartmeter Data for Consumption/Generation
+            master_data: For posting meta data about communities and their participants
+            energy_data: For posting smartmeter timeseries data
+            forecast: For retrieving forecast timeseries data
+            kpi: For retrieving KPI data for a community
+            smartmeter_data: For retrieving smartmeter timeseries data for consumption and generation
+            smartmeter_activations: For retrieving smartmeter activation history for a community
 
   schemas:
     EnergyData:
@@ -777,6 +778,10 @@ paths:
       tags:
         - Master Data
       summary: Insert Master Data
+      description: |
+        This endpoint can be used by partners who handle EDA communication on their own to send meta data about
+        communities and their participants to OPTIVICE.energy. Posting master data does not trigger any EDA processes.
+        For updates please send the complete data set again, not just the changes.
       requestBody:
         description: ""
         content:
@@ -800,6 +805,10 @@ paths:
       tags:
         - Energy Data
       summary: Insert Energy Data -> timeseries
+      description: |
+        This endpoint can be used by partners who handle EDA communication on their own to send energy data to OPTIVICE.energy.
+        Re-sending data for the same metering point and time interval will overwrite the previous data. 
+        After processing, the data will be used for forecasting and KPI calculations.
       requestBody:
         description: ""
         content:
@@ -857,7 +866,7 @@ paths:
             example: "2025-03-04"
       security:
         - OAuth2:
-            - forecast_auth
+            - forecast
       responses:
         "200":
           description: Success
@@ -933,7 +942,7 @@ paths:
             example: "2025-01-07"
       security:
         - OAuth2:
-            - kpi_auth
+            - kpi
       responses:
         "200":
           description: Success
@@ -968,7 +977,7 @@ paths:
             example: "AT000000RC1234560000000000000000"
       security:
         - OAuth2:
-            - meter_data
+            - smartmeter_activations
       responses:
         "200":
           description: Successfully retrieved smart meter activations for the community
@@ -1052,7 +1061,7 @@ paths:
             example: "2025-01-31"
       security:
         - OAuth2:
-            - meter_data
+            - smartmeter_data
       responses:
         "200":
           description: Smart meter data for generation or consumption
