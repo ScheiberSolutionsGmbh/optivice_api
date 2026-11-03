@@ -14,7 +14,7 @@ info:
       Use only for: `/openid-connect/token`
 
     - 🌐 **Main API Server 1.0.2**  
-      Use for all other endpoints (`/masterData/update`, `/energy/data`, `/forecast`, `/kpi`, `/smartmeter-data`, `/smartmeter-activations`)
+      Use for all other endpoints (`/masterData/update`, `/energy/data`, `/forecast`, `/kpi`, `/smartmeter-data`, `/smartmeter-activations`, `/realtime-data`)
 
     Mapping for OBIS codes -> https://energiegemeinschaften.gv.at/obis-code-anpassung-zum-08-04-2024/
 
@@ -30,6 +30,7 @@ info:
         - "Added Smart Meter Data for Billing"
         - "Smart Meter Generation"
         - "Smart Meter Consumption"
+        - "Added Realtime Data Endpoint (smartmeter dongle data)"
     - version: "1.0.1"
       changes:
         - "Added KPI Endpoint"
@@ -58,6 +59,8 @@ tags:
     description: Retrieve smartmeter timeseries data
   - name: Community Activations
     description: Retrieve metering point activation history for a community
+  - name: Realtime
+    description: Retrieve realtime data (power and energy) measured by smartmeter dongles
 
 components:
   securitySchemes:
@@ -73,6 +76,7 @@ components:
             kpi: For retrieving KPI data for a community
             smartmeter_data: For retrieving smartmeter timeseries data for consumption and generation
             smartmeter_activations: For retrieving smartmeter activation history for a community
+            realtime_data: For retrieving realtime data measured by smartmeter dongles
 
   schemas:
     EnergyData:
@@ -580,6 +584,70 @@ components:
           description: Energy community share as a decimal string
           example: "0.0000"
 
+    RealtimeSeries:
+      type: object
+      properties:
+        unit:
+          type: string
+          example: "kW"
+        values:
+          type: array
+          items:
+            type: object
+            properties:
+              measuringStart:
+                type: string
+                format: date-time
+                description: Start of the 15 minute interval
+                example: 2025-01-01T23:00:00+00:00
+              value:
+                type: number
+                nullable: true
+                description: Value in the unit of the series, rounded to 3 decimals
+                example: 0.532
+
+    RealtimeData:
+      type: object
+      description: |
+        Realtime data of the smartmeter dongles linked to the metering point, aggregated into 15 minute intervals.
+        Power is the average per interval (kW), energy import and export are the sums per interval (kWh).
+        Power is positive for import from the grid and negative for export to the grid; energy values are always non-negative.
+        Intervals without data are not included.
+      required: [ecid, meteringPoint, dateFrom, dateTo]
+      properties:
+        processingDate:
+          type: string
+          format: date-time
+          example: 2025-01-01T23:00:00+00:00
+        ecid:
+          type: string
+          example: "AT000000RC1234560000000000000000"
+        meteringPoint:
+          type: string
+          example: "AT0010000000000000000000000000000"
+        dateFrom:
+          type: string
+          format: date-time
+          description: Start of the queried range, converted to UTC.
+          example: "2024-12-31T23:00:00+00:00"
+        dateTo:
+          type: string
+          format: date-time
+          description: End of the queried range, converted to UTC.
+          example: "2025-01-02T22:59:59+00:00"
+        measurementIntervall:
+          type: string
+          example: "QH"
+        measurements:
+          type: object
+          properties:
+            totalActivePower:
+              $ref: "#/components/schemas/RealtimeSeries"
+            totalActiveEnergyImport:
+              $ref: "#/components/schemas/RealtimeSeries"
+            totalActiveEnergyExport:
+              $ref: "#/components/schemas/RealtimeSeries"
+
     SmartMeterConsumptionData:
       type: object
       description: Consumption smartmeter data, grouped by OBIS meter code (see OBIS code mapping in the API description)
@@ -1009,6 +1077,109 @@ paths:
           description: Bad Request (Invalid Parameters)
         "404":
           description: Not Found (Community not found or no permission)
+        "500":
+          description: Internal Server Error
+
+  /realtime-data:
+    servers:
+      - url: https://app.optivice.energy/api/1.0.2/
+    get:
+      tags:
+        - Realtime
+      summary: Get realtime data of a metering point measured by smartmeter dongles
+      description: |
+        Returns power (kW) and energy import/export (kWh) of the smartmeter dongles linked to the metering point,
+        aggregated into 15 minute intervals.
+
+        **Energy direction:** The values are returned regardless of the energy direction (GENERATION or CONSUMPTION)
+        of the metering point. Power, energy import and energy export are always all returned and are not filtered
+        or swapped by direction. The data belongs to the dongle, not to the metering point: if one dongle is linked
+        to several metering points, the same data is returned for each of them.
+
+        **Sign convention:** `totalActivePower` is positive when power is drawn from the grid (import) and negative
+        when power is fed into the grid (export). `totalActiveEnergyImport` and `totalActiveEnergyExport` are both
+        non-negative quantities (export is not returned as a negative value).
+
+        The requested date range must not exceed 31 days.
+
+        `dateFrom` and `dateTo` accept `YYYY-MM-DD`, `YYYY-MM-DDTHH:MM:SS` (both interpreted as Europe/Vienna time)
+        or ISO 8601 with timezone (e.g. `2025-01-01T00:00:00+01:00` or `2025-01-01T00:00:00Z`).
+        With a date only, `dateFrom` starts at 00:00:00 and `dateTo` ends at 23:59:59 (Vienna time).
+        All timestamps in the response are UTC.
+      parameters:
+        - name: ecid
+          in: query
+          required: true
+          description: "ECID of the energy community the metering point belongs to"
+          schema:
+            type: string
+            example: "AT000000RC1234560000000000000000"
+        - name: meteringPoint
+          in: query
+          required: true
+          description: "Metering point for which realtime data is requested"
+          schema:
+            type: string
+            example: "AT0010000000000000000000000000000"
+        - name: dateFrom
+          in: query
+          required: true
+          description: "Start of the data range (YYYY-MM-DD, YYYY-MM-DDTHH:MM:SS, or ISO 8601 with timezone). Without timezone, Europe/Vienna is assumed; date-only starts at 00:00:00."
+          schema:
+            type: string
+            example: "2025-01-01"
+        - name: dateTo
+          in: query
+          required: true
+          description: "End of the data range (YYYY-MM-DD, YYYY-MM-DDTHH:MM:SS, or ISO 8601 with timezone). Without timezone, Europe/Vienna is assumed; date-only ends at 23:59:59."
+          schema:
+            type: string
+            example: "2025-01-02"
+      security:
+        - OAuth2:
+            - realtime_data
+      responses:
+        "200":
+          description: Realtime data in 15 minute intervals
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RealtimeData"
+              examples:
+                realtimeResponse:
+                  value:
+                    data:
+                      processingDate: "2025-01-02T08:00:00+00:00"
+                      ecid: "AT000000RC1234560000000000000000"
+                      meteringPoint: "AT0010000000000000000000000000000"
+                      dateFrom: "2024-12-31T23:00:00+00:00"
+                      dateTo: "2025-01-02T22:59:59+00:00"
+                      measurementIntervall: "QH"
+                      measurements:
+                        totalActivePower:
+                          unit: "kW"
+                          values:
+                            - measuringStart: "2025-01-01T23:00:00+00:00"
+                              value: 0.532
+                        totalActiveEnergyImport:
+                          unit: "kWh"
+                          values:
+                            - measuringStart: "2025-01-01T23:00:00+00:00"
+                              value: 0.133
+                        totalActiveEnergyExport:
+                          unit: "kWh"
+                          values:
+                            - measuringStart: "2025-01-01T23:00:00+00:00"
+                              value: 0.0
+        "400":
+          description: Bad Request (Missing/invalid parameters or date range exceeds 31 days)
+        "403":
+          description: Access denied (client not permitted to use this endpoint for the community)
+        "404":
+          description: Not Found (Community or metering point not found, or metering point not in community)
         "500":
           description: Internal Server Error
 
